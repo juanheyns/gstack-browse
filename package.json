@@ -1,0 +1,40 @@
+{
+  "name": "gstack-browse",
+  "version": "1.0.0",
+  "description": "Persistent headless browser CLI for AI agents",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "bun run build:browse && bun run build:find-browse && bun run build:node-server",
+    "build:browse": "bun build --compile src/cli.ts --outfile dist/browse",
+    "build:find-browse": "bun build --compile src/find-browse.ts --outfile dist/find-browse",
+    "build:node-server": "bash scripts/build-node-server.sh",
+    "build:agent": "bun build --compile src/sidebar-agent-main.ts --outfile dist/browse-agent",
+    "postbuild": "git rev-parse HEAD > dist/.version 2>/dev/null || echo 'unknown' > dist/.version",
+    "test": "bun test test/",
+    "setup": "bash setup",
+    "typecheck": "bun run tsc --noEmit"
+  },
+  "dependencies": {
+    "diff": "^7.0.0",
+    "playwright": "^1.58.2"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/diff": "^7.0.0",
+    "@anthropic-ai/sdk": "^0.78.0"
+  },
+  "engines": {
+    "bun": ">=1.0.0"
+  },
+  "keywords": [
+    "browser",
+    "automation",
+    "playwright",
+    "headless",
+    "cli",
+    "claude",
+    "ai-agent",
+    "devtools"
+  ]
+}

@@ -1,0 +1,167 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        include:
+          - runner: macos-14
+            target: darwin-arm64
+            output: browse-darwin-arm64
+          - runner: macos-13
+            target: darwin-x86_64
+            output: browse-darwin-x86_64
+          - runner: ubuntu-latest
+            target: linux-x86_64
+            output: browse-linux-x86_64
+          - runner: ubuntu-24.04-arm
+            target: linux-arm64
+            output: browse-linux-arm64
+          - runner: windows-latest
+            target: windows-x86_64
+            output: browse-windows-x86_64
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build (non-Windows)
+        if: matrix.runner != 'windows-latest'
+        run: bun run build
+
+      - name: Build (Windows)
+        if: matrix.runner == 'windows-latest'
+        run: bun run build
+
+      - name: Build agent add-on
+        run: bun run build:agent
+
+      - name: Package (non-Windows)
+        if: matrix.runner != 'windows-latest'
+        run: |
+          cd dist
+          tar czf ../${{ matrix.output }}.tar.gz browse
+          tar czf ../browse-agent-${{ matrix.target }}.tar.gz browse-agent
+
+      - name: Package (Windows)
+        if: matrix.runner == 'windows-latest'
+        shell: bash
+        run: |
+          cd dist
+          tar czf ../${{ matrix.output }}.tar.gz browse.exe server-node.mjs bun-polyfill.cjs
+          tar czf ../browse-agent-${{ matrix.target }}.tar.gz browse-agent.exe
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.output }}
+          path: |
+            ${{ matrix.output }}.tar.gz
+            browse-agent-${{ matrix.target }}.tar.gz
+
+  publish:
+    name: Publish release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+
+      - name: Extract version tag
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            browse-darwin-arm64.tar.gz \
+            browse-darwin-x86_64.tar.gz \
+            browse-linux-x86_64.tar.gz \
+            browse-linux-arm64.tar.gz \
+            browse-windows-x86_64.tar.gz \
+            browse-agent-darwin-arm64.tar.gz \
+            browse-agent-darwin-x86_64.tar.gz \
+            browse-agent-linux-x86_64.tar.gz \
+            browse-agent-linux-arm64.tar.gz \
+            browse-agent-windows-x86_64.tar.gz \
+            --generate-notes \
+            --title "browse v$VERSION"
+
+      - name: Compute SHA256 checksums
+        run: |
+          for f in browse-darwin-arm64.tar.gz browse-darwin-x86_64.tar.gz browse-linux-x86_64.tar.gz browse-linux-arm64.tar.gz; do
+            sha256sum "$f" | awk '{print $1}' > "${f%.tar.gz}.sha256"
+          done
+          for f in browse-agent-darwin-arm64.tar.gz browse-agent-darwin-x86_64.tar.gz browse-agent-linux-x86_64.tar.gz browse-agent-linux-arm64.tar.gz; do
+            sha256sum "$f" | awk '{print $1}' > "${f%.tar.gz}.sha256"
+          done
+
+      - name: Clone tap repo
+        run: |
+          git clone https://x-access-token:${{ secrets.HOMEBREW_TAP_TOKEN }}@github.com/juanheyns/homebrew-gstack-browse.git tap
+
+      - name: Update browse.rb
+        run: |
+          VERSION="${{ env.VERSION }}"
+          SHA_DARWIN_ARM=$(cat browse-darwin-arm64.sha256)
+          SHA_DARWIN_X86=$(cat browse-darwin-x86_64.sha256)
+          SHA_LINUX_X86=$(cat browse-linux-x86_64.sha256)
+          SHA_LINUX_ARM=$(cat browse-linux-arm64.sha256)
+          sed -i "s|version \".*\"|version \"${VERSION}\"|g" tap/Formula/browse.rb
+          # Update macOS ARM URL+SHA
+          sed -i "/darwin.*arm/,/sha256/{s|url \".*\"|url \"https://github.com/juanheyns/gstack-browse/releases/download/v${VERSION}/browse-darwin-arm64.tar.gz\"|}" tap/Formula/browse.rb
+          sed -i "/darwin.*arm/,/sha256/{s|sha256 \".*\"|sha256 \"${SHA_DARWIN_ARM}\"|}" tap/Formula/browse.rb
+          # Repeat pattern for x86, linux arm, linux x86 (same sed approach)
+          sed -i "/darwin.*intel/,/sha256/{s|url \".*\"|url \"https://github.com/juanheyns/gstack-browse/releases/download/v${VERSION}/browse-darwin-x86_64.tar.gz\"|}" tap/Formula/browse.rb
+          sed -i "/darwin.*intel/,/sha256/{s|sha256 \".*\"|sha256 \"${SHA_DARWIN_X86}\"|}" tap/Formula/browse.rb
+          sed -i "/linux.*intel/,/sha256/{s|url \".*\"|url \"https://github.com/juanheyns/gstack-browse/releases/download/v${VERSION}/browse-linux-x86_64.tar.gz\"|}" tap/Formula/browse.rb
+          sed -i "/linux.*intel/,/sha256/{s|sha256 \".*\"|sha256 \"${SHA_LINUX_X86}\"|}" tap/Formula/browse.rb
+          sed -i "/linux.*arm/,/sha256/{s|url \".*\"|url \"https://github.com/juanheyns/gstack-browse/releases/download/v${VERSION}/browse-linux-arm64.tar.gz\"|}" tap/Formula/browse.rb
+          sed -i "/linux.*arm/,/sha256/{s|sha256 \".*\"|sha256 \"${SHA_LINUX_ARM}\"|}" tap/Formula/browse.rb
+
+      - name: Update browse-agent.rb
+        run: |
+          VERSION="${{ env.VERSION }}"
+          SHA_AGENT_DARWIN_ARM=$(cat browse-agent-darwin-arm64.sha256)
+          SHA_AGENT_DARWIN_X86=$(cat browse-agent-darwin-x86_64.sha256)
+          SHA_AGENT_LINUX_X86=$(cat browse-agent-linux-x86_64.sha256)
+          SHA_AGENT_LINUX_ARM=$(cat browse-agent-linux-arm64.sha256)
+          # Apply same sed pattern to tap/Formula/browse-agent.rb
+          sed -i "s|version \".*\"|version \"${VERSION}\"|g" tap/Formula/browse-agent.rb
+          sed -i "/darwin.*arm/,/sha256/{s|url \".*\"|url \"https://github.com/juanheyns/gstack-browse/releases/download/v${VERSION}/browse-agent-darwin-arm64.tar.gz\"|}" tap/Formula/browse-agent.rb
+          sed -i "/darwin.*arm/,/sha256/{s|sha256 \".*\"|sha256 \"${SHA_AGENT_DARWIN_ARM}\"|}" tap/Formula/browse-agent.rb
+          sed -i "/darwin.*intel/,/sha256/{s|url \".*\"|url \"https://github.com/juanheyns/gstack-browse/releases/download/v${VERSION}/browse-agent-darwin-x86_64.tar.gz\"|}" tap/Formula/browse-agent.rb
+          sed -i "/darwin.*intel/,/sha256/{s|sha256 \".*\"|sha256 \"${SHA_AGENT_DARWIN_X86}\"|}" tap/Formula/browse-agent.rb
+          sed -i "/linux.*intel/,/sha256/{s|url \".*\"|url \"https://github.com/juanheyns/gstack-browse/releases/download/v${VERSION}/browse-agent-linux-x86_64.tar.gz\"|}" tap/Formula/browse-agent.rb
+          sed -i "/linux.*intel/,/sha256/{s|sha256 \".*\"|sha256 \"${SHA_AGENT_LINUX_X86}\"|}" tap/Formula/browse-agent.rb
+          sed -i "/linux.*arm/,/sha256/{s|url \".*\"|url \"https://github.com/juanheyns/gstack-browse/releases/download/v${VERSION}/browse-agent-linux-arm64.tar.gz\"|}" tap/Formula/browse-agent.rb
+          sed -i "/linux.*arm/,/sha256/{s|sha256 \".*\"|sha256 \"${SHA_AGENT_LINUX_ARM}\"|}" tap/Formula/browse-agent.rb
+
+      - name: Commit and push formula update
+        run: |
+          cd tap
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/browse.rb Formula/browse-agent.rb
+          git commit -m "browse ${{ env.VERSION }}"
+          git push
