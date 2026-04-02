@@ -243,7 +243,9 @@ export class BrowserManager {
     const userDataDir = path.join(process.env.HOME || '/tmp', '.browse', 'chromium-profile');
     fs.mkdirSync(userDataDir, { recursive: true });
 
-    // Pre-enable Developer mode so sideloaded extensions don't show a warning banner.
+    // Pre-configure the Chromium profile before launch:
+    //   - Enable Developer mode (suppresses sideloaded extension warning)
+    //   - Pin the extension to the toolbar (ID is path-derived, recomputed each version)
     const defaultDir = path.join(userDataDir, 'Default');
     fs.mkdirSync(defaultDir, { recursive: true });
     const prefsFile = path.join(defaultDir, 'Preferences');
@@ -254,6 +256,18 @@ export class BrowserManager {
       if (!prefs.extensions) prefs.extensions = {};
       if (!prefs.extensions.ui) prefs.extensions.ui = {};
       prefs.extensions.ui.developer_mode = true;
+      if (extensionPath) {
+        // Chrome derives the extension ID from SHA256 of the path, each nibble mapped a-p
+        const crypto = require('crypto');
+        const hash = crypto.createHash('sha256').update(extensionPath).digest();
+        const alpha = 'abcdefghijklmnop';
+        let extId = '';
+        for (let i = 0; i < 16; i++) {
+          extId += alpha[(hash[i] >> 4) & 0xf];
+          extId += alpha[hash[i] & 0xf];
+        }
+        prefs.extensions.pinned_extensions = [extId];
+      }
       fs.writeFileSync(prefsFile, JSON.stringify(prefs));
     } catch {}
 
