@@ -69,8 +69,6 @@ export function resolveServerScript(
   );
 }
 
-const SERVER_SCRIPT = resolveServerScript();
-
 /**
  * On Windows, resolve the Node.js-compatible server bundle.
  * Falls back to null if not found (server will use Bun instead).
@@ -94,14 +92,6 @@ export function resolveNodeServerScript(
   return null;
 }
 
-const NODE_SERVER_SCRIPT = IS_WINDOWS ? resolveNodeServerScript() : null;
-
-// On Windows, hard-fail if server-node.mjs is missing — the Bun path is known broken.
-if (IS_WINDOWS && !NODE_SERVER_SCRIPT) {
-  throw new Error(
-    'server-node.mjs not found. Run `bun run build` to generate the Windows server bundle.'
-  );
-}
 
 interface ServerState {
   pid: number;
@@ -244,6 +234,15 @@ async function startServer(extraEnv?: Record<string, string>): Promise<ServerSta
   // Clean up stale state file and error log
   try { fs.unlinkSync(config.stateFile); } catch {}
   try { fs.unlinkSync(path.join(config.stateDir, 'browse-startup-error.log')); } catch {}
+
+  const SERVER_SCRIPT = resolveServerScript();
+  const NODE_SERVER_SCRIPT = IS_WINDOWS ? resolveNodeServerScript() : null;
+
+  if (IS_WINDOWS && !NODE_SERVER_SCRIPT) {
+    throw new Error(
+      'server-node.mjs not found. Run `bun run build` to generate the Windows server bundle.'
+    );
+  }
 
   let proc: any = null;
 
