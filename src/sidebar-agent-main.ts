@@ -20,14 +20,54 @@ import { spawnSync } from 'child_process';
 import { existsSync } from 'fs';
 import { dirname, resolve } from 'path';
 
-const agentSrc = resolve(dirname(process.execPath), '..', 'src', 'sidebar-agent.ts');
+function findBun(): string {
+  const r = spawnSync('which', ['bun'], { encoding: 'utf-8', stdio: 'pipe' });
+  if (r.status === 0 && r.stdout.trim()) return r.stdout.trim();
+  const candidates = [
+    `${process.env.HOME}/.bun/bin/bun`,
+    '/opt/homebrew/bin/bun',
+    '/usr/local/bin/bun',
+  ];
+  for (const p of candidates) {
+    if (existsSync(p)) return p;
+  }
+  throw new Error('bun not found. Install from https://bun.sh then re-run the command.');
+}
 
-if (!existsSync(agentSrc)) {
-  process.stderr.write(`[browse-agent] Cannot find sidebar-agent.ts at ${agentSrc}\n`);
+// Look for sidebar-agent.mjs adjacent to this binary (production install),
+// then fall back to sidebar-agent.ts in the source tree (dev mode).
+function resolveAgentScript(): string {
+  const execDir = dirname(process.execPath);
+
+  const prodMjs = resolve(execDir, 'sidebar-agent.mjs');
+  if (existsSync(prodMjs)) return prodMjs;
+
+  const devTs = resolve(execDir, '..', 'src', 'sidebar-agent.ts');
+  if (existsSync(devTs)) return devTs;
+
+  throw new Error(
+    `Cannot find sidebar-agent.mjs. Re-install browse-agent or run \`bun run build:agent\` in the source tree.\n` +
+    `Looked in: ${prodMjs}`
+  );
+}
+
+let agentScript: string;
+try {
+  agentScript = resolveAgentScript();
+} catch (e: any) {
+  process.stderr.write(`[browse-agent] ${e.message}\n`);
   process.exit(1);
 }
 
-const result = spawnSync('bun', ['run', agentSrc], {
+let bun: string;
+try {
+  bun = findBun();
+} catch (e: any) {
+  process.stderr.write(`[browse-agent] ${e.message}\n`);
+  process.exit(1);
+}
+
+const result = spawnSync(bun, ['run', agentScript], {
   stdio: 'inherit',
   env: process.env,
 });

@@ -71,7 +71,7 @@ jobs:
         run: |
           TARGET_FLAG=${BUN_TARGET:+--target=$BUN_TARGET}
           bun build --compile src/sidebar-agent-main.ts --outfile dist/browse-agent $TARGET_FLAG
-
+          bun build src/sidebar-agent.ts --outfile dist/sidebar-agent.mjs --target=bun
 
       - name: Build agent add-on (Windows)
         if: matrix.runner == 'windows-latest'
@@ -82,7 +82,7 @@ jobs:
         run: |
           cd dist
           tar czf ../${{ matrix.output }}.tar.gz browse server.mjs
-          tar czf ../browse-agent-${{ matrix.target }}.tar.gz browse-agent
+          tar czf ../browse-agent-${{ matrix.target }}.tar.gz browse-agent sidebar-agent.mjs
 
       - name: Package (Windows)
         if: matrix.runner == 'windows-latest'

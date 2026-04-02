@@ -10,7 +10,7 @@
     "build:server": "bun build src/server.ts --outfile dist/server.mjs --target=bun --external playwright --external playwright-core",
     "build:find-browse": "bun build --compile src/find-browse.ts --outfile dist/find-browse",
     "build:node-server": "bash scripts/build-node-server.sh",
-    "build:agent": "bun build --compile src/sidebar-agent-main.ts --outfile dist/browse-agent",
+    "build:agent": "bun build --compile src/sidebar-agent-main.ts --outfile dist/browse-agent && bun build src/sidebar-agent.ts --outfile dist/sidebar-agent.mjs --target=bun",
     "test": "bun test test/",
     "smoke": "bun test test/smoke.test.ts --timeout 60000",
     "setup": "bash setup",
