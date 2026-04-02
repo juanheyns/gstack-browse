@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>browse — headless browser for AI agents</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --border: #2a2d3a;
+      --accent: #7c6af7;
+      --accent-dim: #3d3570;
+      --text: #e2e4f0;
+      --muted: #8b8fa8;
+      --code-bg: #12141e;
+      --green: #4ade80;
+      --font-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", Menlo, monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ── Layout ── */
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      z-index: 10;
+    }
+
+    header .logo {
+      font-family: var(--font-mono);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    header nav a {
+      margin-left: 1.5rem;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    header nav a:hover { color: var(--text); text-decoration: none; }
+
+    main {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 2rem 6rem;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      padding: 5rem 0 4rem;
+      text-align: center;
+    }
+
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 1rem;
+    }
+
+    .hero h1 span { color: var(--accent); }
+
+    .hero p {
+      font-size: 1.15rem;
+      color: var(--muted);
+      max-width: 560px;
+      margin: 0 auto 2.5rem;
+    }
+
+    .install-box {
+      display: inline-flex;
+      align-items: center;
+      gap: 1rem;
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.9rem 1.4rem;
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+    }
+
+    .install-box .prompt { color: var(--accent); user-select: none; }
+    .install-box .cmd { color: var(--text); }
+
+    .copy-btn {
+      background: var(--accent-dim);
+      border: none;
+      border-radius: 6px;
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.75rem;
+      padding: 0.3rem 0.7rem;
+      transition: background 0.15s;
+    }
+    .copy-btn:hover { background: var(--accent); }
+    .copy-btn.copied { background: var(--green); color: #000; }
+
+    /* ── Sections ── */
+    section { margin-top: 4rem; }
+
+    h2 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin: 2rem 0 0.75rem;
+    }
+
+    /* ── Code blocks ── */
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.1rem 1.4rem;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+      line-height: 1.7;
+    }
+
+    pre .comment { color: var(--muted); }
+    pre .cmd { color: var(--green); }
+    pre .str { color: #f9c74f; }
+
+    /* ── Command table ── */
+    .cmd-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+
+    .cmd-table th {
+      text-align: left;
+      padding: 0.5rem 1rem 0.5rem 0;
+      color: var(--muted);
+      font-weight: 600;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .cmd-table td {
+      padding: 0.45rem 1rem 0.45rem 0;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    .cmd-table td:first-child {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--accent);
+      white-space: nowrap;
+      padding-right: 1.5rem;
+    }
+
+    .cmd-table td:last-child { color: var(--muted); }
+
+    /* ── Badges ── */
+    .badges { display: flex; gap: 0.5rem; justify-content: center; margin-top: 1.5rem; flex-wrap: wrap; }
+
+    .badge {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 0.25rem 0.8rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    /* ── Footer ── */
+    footer {
+      margin-top: 6rem;
+      border-top: 1px solid var(--border);
+      padding: 2rem;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <span class="logo">browse</span>
+  <nav>
+    <a href="#install">Install</a>
+    <a href="#usage">Usage</a>
+    <a href="#commands">Commands</a>
+    <a href="https://github.com/juanheyns/gstack-browse">GitHub</a>
+  </nav>
+</header>
+
+<main>
+
+  <!-- Hero -->
+  <div class="hero">
+    <h1>Headless browser for<br><span>AI agents</span></h1>
+    <p>A fast, persistent CLI for navigating, reading, and interacting with web pages — designed to be called by LLMs one command at a time.</p>
+
+    <div class="install-box">
+      <span class="prompt">$</span>
+      <span class="cmd" id="install-cmd">brew install juanheyns/gstack-browse/browse</span>
+      <button class="copy-btn" onclick="copyInstall(this)">copy</button>
+    </div>
+
+    <div class="badges">
+      <span class="badge">macOS · Linux · Windows</span>
+      <span class="badge">~100ms per command</span>
+      <span class="badge">Playwright · Chromium</span>
+      <span class="badge">MIT license</span>
+    </div>
+  </div>
+
+  <!-- Install -->
+  <section id="install">
+    <h2>Installation</h2>
+
+    <h3>Homebrew (recommended)</h3>
+    <pre><span class="cmd">brew tap juanheyns/gstack-browse
+brew install browse
+browse setup-chromium</span>   <span class="comment"># installs Chromium once</span></pre>
+
+    <h3>Manual</h3>
+    <pre><span class="comment"># Download a release binary from GitHub and put it in your PATH</span>
+<span class="cmd">curl -L https://github.com/juanheyns/gstack-browse/releases/latest/download/browse-darwin-arm64.tar.gz | tar xz
+mv browse /usr/local/bin/
+browse setup-chromium</span></pre>
+
+    <h3>Optional: Claude sidebar agent</h3>
+    <pre><span class="cmd">brew install juanheyns/gstack-browse/browse-agent</span>
+<span class="comment"># Enables a Claude-powered sidebar in headed mode. Requires the claude CLI.</span></pre>
+  </section>
+
+  <!-- Usage -->
+  <section id="usage">
+    <h2>Quick start</h2>
+
+    <h3>Navigate and read</h3>
+    <pre><span class="cmd">browse goto https://example.com</span>
+<span class="cmd">browse text</span>                   <span class="comment"># extract all visible text</span>
+<span class="cmd">browse snapshot</span>               <span class="comment"># structured snapshot with @ref labels</span>
+<span class="cmd">browse screenshot /tmp/page.png</span></pre>
+
+    <h3>Fill a form</h3>
+    <pre><span class="cmd">browse goto https://example.com/login</span>
+<span class="cmd">browse fill <span class="str">"#email"</span> <span class="str">"user@example.com"</span></span>
+<span class="cmd">browse fill <span class="str">"#password"</span> <span class="str">"secret"</span></span>
+<span class="cmd">browse click <span class="str">"[type=submit]"</span></span>
+<span class="cmd">browse wait --networkidle</span>
+<span class="cmd">browse url</span>                    <span class="comment"># confirm redirect</span></pre>
+
+    <h3>Use snapshot refs</h3>
+    <pre><span class="cmd">browse snapshot</span>               <span class="comment"># labels interactive elements @e1, @e2 …</span>
+<span class="cmd">browse click @e3</span>
+<span class="cmd">browse fill @e4 <span class="str">"search term"</span></span>
+<span class="cmd">browse snapshot -D</span>            <span class="comment"># diff against previous snapshot</span></pre>
+
+    <h3>Responsive screenshots</h3>
+    <pre><span class="cmd">browse goto https://example.com</span>
+<span class="cmd">browse responsive /tmp/shots</span>  <span class="comment"># saves mobile / tablet / desktop PNGs</span></pre>
+  </section>
+
+  <!-- Commands -->
+  <section id="commands">
+    <h2>Command reference</h2>
+
+    <h3>Navigation</h3>
+    <table class="cmd-table">
+      <tr><td>browse goto &lt;url&gt;</td><td>Navigate to URL</td></tr>
+      <tr><td>browse back / forward</td><td>Browser history</td></tr>
+      <tr><td>browse reload</td><td>Reload current page</td></tr>
+      <tr><td>browse url</td><td>Print current URL</td></tr>
+    </table>
+
+    <h3>Reading</h3>
+    <table class="cmd-table">
+      <tr><td>browse text [sel]</td><td>Extract visible text</td></tr>
+      <tr><td>browse html [sel]</td><td>Extract raw HTML</td></tr>
+      <tr><td>browse links</td><td>List links with text and href</td></tr>
+      <tr><td>browse forms</td><td>List forms and fields</td></tr>
+      <tr><td>browse snapshot</td><td>Structured snapshot with @ref labels</td></tr>
+      <tr><td>browse snapshot -i</td><td>Snapshot + screenshot</td></tr>
+      <tr><td>browse snapshot -a</td><td>Annotated screenshot with ref overlay</td></tr>
+      <tr><td>browse snapshot -D</td><td>Diff against previous snapshot</td></tr>
+      <tr><td>browse accessibility</td><td>Accessibility tree</td></tr>
+    </table>
+
+    <h3>Interaction</h3>
+    <table class="cmd-table">
+      <tr><td>browse click &lt;sel&gt;</td><td>Click element</td></tr>
+      <tr><td>browse fill &lt;sel&gt; &lt;value&gt;</td><td>Fill input field</td></tr>
+      <tr><td>browse select &lt;sel&gt; &lt;value&gt;</td><td>Select dropdown option</td></tr>
+      <tr><td>browse hover &lt;sel&gt;</td><td>Hover element</td></tr>
+      <tr><td>browse type &lt;text&gt;</td><td>Type at current focus</td></tr>
+      <tr><td>browse press &lt;key&gt;</td><td>Press keyboard key</td></tr>
+      <tr><td>browse scroll [sel]</td><td>Scroll page or element into view</td></tr>
+      <tr><td>browse upload &lt;sel&gt; &lt;file&gt;</td><td>Upload file via input</td></tr>
+    </table>
+
+    <h3>Screenshots &amp; media</h3>
+    <table class="cmd-table">
+      <tr><td>browse screenshot [path]</td><td>Full-page screenshot</td></tr>
+      <tr><td>browse screenshot --viewport</td><td>Viewport-only screenshot</td></tr>
+      <tr><td>browse screenshot --clip x,y,w,h</td><td>Clipped screenshot</td></tr>
+      <tr><td>browse pdf [path]</td><td>Save page as PDF</td></tr>
+      <tr><td>browse responsive [prefix]</td><td>Screenshots at common breakpoints</td></tr>
+    </table>
+
+    <h3>Waiting &amp; assertions</h3>
+    <table class="cmd-table">
+      <tr><td>browse wait &lt;sel&gt;</td><td>Wait for selector</td></tr>
+      <tr><td>browse wait --networkidle</td><td>Wait for network idle</td></tr>
+      <tr><td>browse wait --load</td><td>Wait for load event</td></tr>
+      <tr><td>browse is visible &lt;sel&gt;</td><td>Assert element is visible</td></tr>
+      <tr><td>browse is hidden &lt;sel&gt;</td><td>Assert element is hidden</td></tr>
+      <tr><td>browse is enabled / disabled</td><td>Assert enabled state</td></tr>
+      <tr><td>browse is checked &lt;sel&gt;</td><td>Assert checkbox checked</td></tr>
+    </table>
+
+    <h3>JavaScript &amp; CSS</h3>
+    <table class="cmd-table">
+      <tr><td>browse js &lt;expr&gt;</td><td>Evaluate JavaScript expression</td></tr>
+      <tr><td>browse eval &lt;file&gt;</td><td>Execute JS from file</td></tr>
+      <tr><td>browse css &lt;sel&gt; &lt;prop&gt;</td><td>Get computed CSS property</td></tr>
+      <tr><td>browse attrs &lt;sel&gt;</td><td>Get all element attributes</td></tr>
+    </table>
+
+    <h3>Network, cookies &amp; storage</h3>
+    <table class="cmd-table">
+      <tr><td>browse network</td><td>Get network request log</td></tr>
+      <tr><td>browse console</td><td>Get browser console logs</td></tr>
+      <tr><td>browse dialog</td><td>Get dialog log</td></tr>
+      <tr><td>browse cookies</td><td>Get all cookies</td></tr>
+      <tr><td>browse cookie &lt;n&gt;=&lt;v&gt;</td><td>Set a cookie</td></tr>
+      <tr><td>browse cookie-import-browser [browser]</td><td>Import from local browser</td></tr>
+      <tr><td>browse storage</td><td>Get localStorage / sessionStorage</td></tr>
+      <tr><td>browse header &lt;name&gt;:&lt;value&gt;</td><td>Set request header</td></tr>
+      <tr><td>browse useragent &lt;string&gt;</td><td>Set User-Agent</td></tr>
+    </table>
+
+    <h3>Tabs &amp; sessions</h3>
+    <table class="cmd-table">
+      <tr><td>browse tabs</td><td>List open tabs</td></tr>
+      <tr><td>browse tab &lt;id&gt;</td><td>Switch to tab</td></tr>
+      <tr><td>browse newtab [url]</td><td>Open new tab</td></tr>
+      <tr><td>browse closetab [id]</td><td>Close tab</td></tr>
+      <tr><td>browse handoff</td><td>Export browser state</td></tr>
+      <tr><td>browse resume</td><td>Resume from handoff</td></tr>
+    </table>
+
+    <h3>Server &amp; config</h3>
+    <table class="cmd-table">
+      <tr><td>browse status</td><td>Print server status</td></tr>
+      <tr><td>browse stop / restart</td><td>Stop or restart server</td></tr>
+      <tr><td>browse config get &lt;key&gt;</td><td>Read a config value</td></tr>
+      <tr><td>browse config set &lt;key&gt; &lt;val&gt;</td><td>Write a config value</td></tr>
+      <tr><td>browse setup-chromium</td><td>Install Chromium via Playwright</td></tr>
+    </table>
+  </section>
+
+</main>
+
+<footer>
+  <a href="https://github.com/juanheyns/gstack-browse">github.com/juanheyns/gstack-browse</a>
+  &nbsp;·&nbsp; MIT license
+</footer>
+
+<script>
+  function copyInstall(btn) {
+    const text = document.getElementById('install-cmd').textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'copied!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+</script>
+
+</body>
+</html>
