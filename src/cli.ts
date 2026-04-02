@@ -757,6 +757,18 @@ Refs:           After 'snapshot', use @e1, @e2... as selectors:
     commandArgs.push(stdin.trim());
   }
 
+  // stop/restart: don't start a server just to stop it
+  if (command === 'stop' || command === 'restart') {
+    const existing = readState();
+    if (!existing || !isProcessAlive(existing.pid)) {
+      if (command === 'stop') {
+        // Nothing running — nothing to do
+        process.exit(0);
+      }
+      // restart with no server falls through to normal ensureServer() + sendCommand
+    }
+  }
+
   const state = await ensureServer();
   await sendCommand(state, command, commandArgs);
 }

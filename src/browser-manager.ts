@@ -106,12 +106,14 @@ export class BrowserManager {
   private findExtensionPath(): string | null {
     const fs = require('fs');
     const path = require('path');
+    // process.argv[1] is the runtime path of server.mjs — reliable in production.
+    // __dirname is baked in at bundle time (points to the CI runner src/ dir) — only useful in dev.
+    const runtimeDir = path.dirname(process.argv[1] || '');
     const candidates = [
+      // Homebrew install: server.mjs lives in bin/, extension in ../share/browse/extension
+      path.resolve(runtimeDir, '..', 'share', 'browse', 'extension'),
       // Dev mode: source tree (src/ -> ../extension)
       path.resolve(__dirname, '..', 'extension'),
-      // Homebrew install: server.mjs lives in bin/, extension in ../share/browse/extension
-      // __dirname is the directory of server.mjs (reliable); process.execPath is bun itself (unreliable)
-      path.resolve(__dirname, '..', 'share', 'browse', 'extension'),
       // User config fallback
       path.join(process.env.HOME || '', '.config', 'browse', 'extension'),
     ].filter(Boolean);
@@ -123,6 +125,8 @@ export class BrowserManager {
         }
       } catch {}
     }
+    console.warn(`[browse] Extension not found. Headed mode will run without it.`);
+    console.warn(`[browse] Checked: ${candidates.join(', ')}`);
     return null;
   }
 
