@@ -80,8 +80,9 @@ jobs:
       - name: Package (non-Windows)
         if: matrix.runner != 'windows-latest'
         run: |
+          cp -r extension dist/extension
           cd dist
-          tar czf ../${{ matrix.output }}.tar.gz browse server.mjs
+          tar czf ../${{ matrix.output }}.tar.gz browse server.mjs extension
           tar czf ../browse-agent-${{ matrix.target }}.tar.gz browse-agent sidebar-agent.mjs
 
       - name: Package (Windows)
