@@ -700,9 +700,35 @@ Refs:           After 'snapshot', use @e1, @e2... as selectors:
         console.log('[browse]   brew install juanheyns/gstack-browse/browse-agent');
       }
 
+      const hasAgent = !!agentPath;
       console.log('');
-      console.log('Sidebar: click the gstack browse icon in the Chrome toolbar to open the panel.');
-      console.log('Shortcut: Cmd+Shift+Y (or set a custom one at chrome://extensions/shortcuts)');
+      console.log('──────────────────────────────────────────────');
+      console.log('  Chrome is open. Here\'s what to do next:');
+      console.log('');
+      console.log('  1. Open the sidebar');
+      console.log('       Click the browse icon in the Chrome toolbar,');
+      console.log('       or press Cmd+Shift+Y');
+      console.log('');
+      if (hasAgent) {
+        console.log('  2. Chat with Claude');
+        console.log('       Type a message in the Chat tab — Claude can');
+        console.log('       navigate, read, and interact with any page.');
+        console.log('');
+        console.log('  3. Navigate from your terminal');
+        console.log('       browse goto https://example.com');
+        console.log('       browse snapshot');
+      } else {
+        console.log('  2. Install browse-agent for Claude chat');
+        console.log('       brew install juanheyns/gstack-browse/browse-agent');
+        console.log('       Then re-run: browse connect');
+        console.log('');
+        console.log('  3. Navigate from your terminal');
+        console.log('       browse goto https://example.com');
+        console.log('       browse snapshot');
+      }
+      console.log('');
+      console.log('  browse disconnect   — close Chrome and stop the server');
+      console.log('──────────────────────────────────────────────');
     } catch (err: any) {
       console.error(`[browse] Connect failed: ${err.message}`);
       process.exit(1);
