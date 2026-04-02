@@ -243,6 +243,20 @@ export class BrowserManager {
     const userDataDir = path.join(process.env.HOME || '/tmp', '.browse', 'chromium-profile');
     fs.mkdirSync(userDataDir, { recursive: true });
 
+    // Pre-enable Developer mode so sideloaded extensions don't show a warning banner.
+    const defaultDir = path.join(userDataDir, 'Default');
+    fs.mkdirSync(defaultDir, { recursive: true });
+    const prefsFile = path.join(defaultDir, 'Preferences');
+    try {
+      const prefs = fs.existsSync(prefsFile)
+        ? JSON.parse(fs.readFileSync(prefsFile, 'utf-8'))
+        : {};
+      if (!prefs.extensions) prefs.extensions = {};
+      if (!prefs.extensions.ui) prefs.extensions.ui = {};
+      prefs.extensions.ui.developer_mode = true;
+      fs.writeFileSync(prefsFile, JSON.stringify(prefs));
+    } catch {}
+
     this.context = await chromium.launchPersistentContext(userDataDir, {
       headless: false,
       args: launchArgs,
