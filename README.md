@@ -4,9 +4,15 @@ Persistent headless browser CLI for AI agents. Navigate, interact, snapshot, and
 
 ## Install
 
+**Homebrew**
 ```bash
 brew tap juanheyns/gstack-browse
 brew install browse
+```
+
+**Claude Code skill** ([skills.sh](https://skills.sh))
+```bash
+npx skills add https://github.com/juanheyns/gstack-browse --skill gstack-browse
 ```
 
 ## Quick start
