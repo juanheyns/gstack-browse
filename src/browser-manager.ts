@@ -107,10 +107,11 @@ export class BrowserManager {
     const fs = require('fs');
     const path = require('path');
     const candidates = [
-      // Dev mode: source tree (gstack-browse/src/ -> ../extension)
+      // Dev mode: source tree (src/ -> ../extension)
       path.resolve(__dirname, '..', 'extension'),
-      // Homebrew install: extension shipped alongside binary
-      path.resolve(path.dirname(process.execPath), '..', 'share', 'browse', 'extension'),
+      // Homebrew install: server.mjs lives in bin/, extension in ../share/browse/extension
+      // __dirname is the directory of server.mjs (reliable); process.execPath is bun itself (unreliable)
+      path.resolve(__dirname, '..', 'share', 'browse', 'extension'),
       // User config fallback
       path.join(process.env.HOME || '', '.config', 'browse', 'extension'),
     ].filter(Boolean);
