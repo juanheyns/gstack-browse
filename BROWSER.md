@@ -1,6 +1,6 @@
-# browse — technical details
+# browse — internals & architecture
 
-This document covers the architecture and internals of the browse headless browser CLI.
+This document covers the design rationale, architecture, and command internals of the browse headless browser CLI.
 
 ## Command reference
 
@@ -279,6 +279,126 @@ MCP (Model Context Protocol) works well for remote services, but for local brows
 - **Unnecessary abstraction**: Claude Code already has a Bash tool. A CLI that prints to stdout is the simplest possible interface.
 
 browse skips all of this. Compiled binary. Plain text in, plain text out. No protocol. No schema. No connection management.
+
+## Why this architecture
+
+### The core idea
+
+An AI agent interacting with a browser needs **sub-second latency** and **persistent state**. If every command cold-starts a browser, you're waiting 3-5 seconds per tool call. If the browser dies between commands, you lose cookies, tabs, and login sessions. browse runs a long-lived Chromium daemon that the CLI talks to over localhost HTTP.
+
+First call starts everything (~3s). Every call after: ~100-200ms.
+
+### Why Bun
+
+1. **Compiled binaries.** `bun build --compile` produces a single ~58MB executable. No `node_modules` at runtime, no `npx`, no PATH configuration. The binary just runs.
+2. **Native SQLite.** Cookie decryption reads Chromium's SQLite cookie database directly via Bun's built-in `Database` — no `better-sqlite3`, no native addon compilation.
+3. **Native TypeScript.** The server runs as `bun run src/server.ts` during development. No compilation step, no `ts-node`.
+4. **Built-in HTTP server.** `Bun.serve()` handles the ~10 routes without a framework.
+
+The bottleneck is always Chromium, not the CLI or server.
+
+### Why CLI over MCP?
+
+MCP (Model Context Protocol) works well for remote services, but for local browser automation it adds pure overhead:
+
+- **Context bloat**: every MCP call includes full JSON schemas and protocol framing. A simple "get the page text" costs 10x more context tokens than it should.
+- **Connection fragility**: persistent WebSocket/stdio connections drop and fail to reconnect.
+- **Unnecessary abstraction**: Claude Code already has a Bash tool. A CLI that prints to stdout is the simplest possible interface.
+
+| Tool | First call | Subsequent calls | Context overhead per call |
+|------|-----------|-----------------|--------------------------|
+| Chrome MCP | ~5s | ~2-5s | ~2000 tokens |
+| Playwright MCP | ~3s | ~1-3s | ~1500 tokens |
+| **browse** | **~3s** | **~100-200ms** | **0 tokens** |
+
+In a 20-command session, MCP tools burn 30,000-40,000 tokens on protocol framing alone. browse burns zero.
+
+### Daemon model
+
+#### State file
+
+The server writes `.browse/browse.json` (atomic write via tmp + rename, mode 0o600):
+
+```json
+{ "pid": 12345, "port": 34567, "token": "uuid-v4", "startedAt": "...", "binaryVersion": "abc123" }
+```
+
+The CLI reads this file to find the server. If it's missing or the server fails a health check, the CLI spawns a new server. On Windows, PID-based process detection is unreliable in Bun binaries, so `GET /health` is the primary liveness signal on all platforms.
+
+#### Port selection
+
+Random port between 10000-60000 (retry up to 5 on collision). Multiple projects can each run their own browse daemon with zero configuration and zero port conflicts.
+
+#### Version auto-restart
+
+The build writes `git rev-parse HEAD` to `dist/.version`. On each CLI invocation, if the binary's version doesn't match the running server's `binaryVersion`, the CLI kills the old server and starts a new one. Rebuild the binary — next command picks it up automatically.
+
+### Security model
+
+- **Localhost only.** The HTTP server binds to `localhost`, not `0.0.0.0`.
+- **Bearer token auth.** Every session generates a random UUID token (mode 0o600). Every HTTP request must include `Authorization: Bearer <token>`.
+- **Cookie security.** First import triggers a macOS Keychain dialog. Decryption happens in-process (PBKDF2 + AES-128-CBC), never written to disk in plaintext. The Chromium cookie DB is opened read-only via a temp copy. Cookie values are never in logs.
+- **Shell injection prevention.** Browser registry is hardcoded. Keychain access uses `Bun.spawn()` with explicit argument arrays, not shell interpolation.
+
+### Ref system deep dive
+
+#### Why Locators, not DOM mutation
+
+The obvious approach is to inject `data-ref="@e1"` attributes into the DOM. This breaks on:
+
+- **CSP (Content Security Policy).** Many production sites block DOM modification from scripts.
+- **React/Vue/Svelte hydration.** Framework reconciliation can strip injected attributes.
+- **Shadow DOM.** Can't reach inside shadow roots from the outside.
+
+Playwright Locators are external to the DOM. They use `getByRole()` queries against the accessibility tree. No DOM mutation, no CSP issues, no framework conflicts.
+
+#### Ref lifecycle
+
+Refs are cleared on navigation (`framenavigated` on the main frame). Stale refs should fail loudly, not click the wrong element.
+
+#### Staleness detection in SPAs
+
+SPAs can mutate the DOM without triggering `framenavigated`. `resolveRef()` performs an async `count()` check before using any ref:
+
+```
+resolveRef(@e3) → count = await entry.locator.count()
+                → if 0: throw "Ref @e3 is stale — run 'snapshot' to get fresh refs."
+```
+
+Fails fast (~5ms) instead of hitting Playwright's 30-second action timeout.
+
+### Command dispatch
+
+Commands are categorized by side effects:
+
+- **READ** (text, html, links, console, cookies, ...): No mutations. Safe to retry.
+- **WRITE** (goto, click, fill, press, ...): Mutates page state. Not idempotent.
+- **META** (snapshot, screenshot, tabs, chain, ...): Server-level operations.
+
+```typescript
+if (READ_COMMANDS.has(cmd))  → handleReadCommand(cmd, args, bm)
+if (WRITE_COMMANDS.has(cmd)) → handleWriteCommand(cmd, args, bm)
+if (META_COMMANDS.has(cmd))  → handleMetaCommand(cmd, args, bm, shutdown)
+```
+
+### Error philosophy
+
+Errors are for AI agents, not humans. Every error must be actionable:
+
+- "Element not found" → "Element not found or not interactable. Run `snapshot -i` to see available elements."
+- "Selector matched multiple elements" → "Use @refs from `snapshot` instead."
+- Timeout → "Navigation timed out after 30s. The page may be slow or the URL may be wrong."
+
+Playwright's native errors are rewritten through `wrapError()` to strip stack traces and add guidance.
+
+The server doesn't try to self-heal on Chromium crash — it exits immediately. The CLI detects the dead server and auto-restarts. Simpler and more reliable than reconnection logic.
+
+### What's intentionally not here
+
+- **No WebSocket streaming.** HTTP request/response is simpler, debuggable with curl, and fast enough.
+- **No multi-user support.** One server per workspace, one user. Token auth is defense-in-depth.
+- **No Windows/Linux cookie decryption.** macOS Keychain is the only supported credential store.
+- **No iframe auto-discovery.** `browse frame` supports cross-frame interaction, but `snapshot` does not auto-crawl iframes — you must enter a frame context explicitly.
 
 ## Acknowledgments
 
