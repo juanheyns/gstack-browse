@@ -131,6 +131,7 @@ jobs:
             browse-agent-linux-arm64.tar.gz \
             browse-agent-windows-x86_64.tar.gz \
             --generate-notes \
+            --clobber \
             --title "browse v$VERSION"
 
       - name: Compute SHA256 checksums
