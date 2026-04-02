@@ -46,6 +46,15 @@ jobs:
         if: matrix.runner == 'windows-latest'
         run: bun run build
 
+      - name: Write version file (non-Windows)
+        if: matrix.runner != 'windows-latest'
+        run: git rev-parse HEAD > dist/.version
+
+      - name: Write version file (Windows)
+        if: matrix.runner == 'windows-latest'
+        shell: pwsh
+        run: git rev-parse HEAD | Out-File -FilePath dist/.version -Encoding ascii -NoNewline
+
       - name: Build agent add-on
         run: bun run build:agent
 
