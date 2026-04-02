@@ -47,6 +47,22 @@ To load it manually:
 
 The extension communicates only with the local browse server via WebSocket. It makes no external network requests.
 
+## Verify your installation
+
+After installing, you can run the smoke test suite to confirm everything works:
+
+```bash
+bun test https://raw.githubusercontent.com/juanheyns/gstack-browse/main/test/smoke.test.ts --timeout 60000
+```
+
+Or if you have the repo checked out:
+
+```bash
+bun run smoke
+```
+
+Requires bun in PATH. Runs 15 tests covering navigation, reading, screenshots, tabs, and assertions against `https://example.com`.
+
 ## Building from source
 
 ```bash
