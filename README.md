@@ -25,14 +25,34 @@ See [SKILL.md](./SKILL.md) for the full command reference (60+ commands) with ex
 
 ## browse-agent (optional Claude add-on)
 
-`browse-agent` adds a Claude-powered sidebar to headed mode. It requires the `claude` CLI in PATH.
+`browse-agent` adds a Claude-powered sidebar to headed mode. It requires the `claude` CLI (Claude Code) in PATH.
 
 ```bash
 brew install juanheyns/gstack-browse/browse-agent
 browse connect
 ```
 
-When installed, `browse connect` launches headed Chrome with the extension and auto-starts the sidebar agent. Without `browse-agent`, the headed mode still works — the sidebar panel is present but unresponsive.
+`browse connect` launches headed Chromium with the extension loaded, pins the extension icon to the toolbar, and auto-starts the sidebar agent. Open the sidebar by clicking the extension icon or pressing `Cmd+Shift+Y`.
+
+### How it works
+
+```
+You type in sidebar
+      ↓
+Chrome extension → browse server (/sidebar-command)
+      ↓
+sidebar-agent polls queue → spawns: claude -p "your message"
+      ↓
+Claude streams response → server → extension → sidebar
+```
+
+Claude has access to all `browse` commands and runs in your current working directory, so it can navigate, read, and interact with whatever page is open in Chrome.
+
+**Requirements:**
+- `claude` CLI in PATH — install from [claude.ai/download](https://claude.ai/download)
+- Run `browse connect` from your project directory so Claude has git context
+
+Without `browse-agent`, headed mode still works — the sidebar panel opens but the chat tab is unresponsive.
 
 ## Chrome extension
 

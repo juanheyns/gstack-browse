@@ -211,6 +211,7 @@
   <span class="logo">browse</span>
   <nav>
     <a href="#install">Install</a>
+    <a href="#sidebar">Sidebar</a>
     <a href="#usage">Usage</a>
     <a href="#commands">Commands</a>
     <a href="https://github.com/juanheyns/gstack-browse">GitHub</a>
@@ -256,6 +257,42 @@ browse setup-chromium</span></pre>
     <h3>Optional: Claude sidebar agent</h3>
     <pre><span class="cmd">brew install juanheyns/gstack-browse/browse-agent</span>
 <span class="comment"># Enables a Claude-powered sidebar in headed mode. Requires the claude CLI.</span></pre>
+  </section>
+
+  <!-- Sidebar agent -->
+  <section id="sidebar">
+    <h2>Sidebar agent</h2>
+    <p style="color:var(--muted);margin-bottom:1.5rem">
+      <code style="background:var(--code-bg);padding:0.1rem 0.4rem;border-radius:4px">browse-agent</code>
+      adds a Claude-powered chat panel to headed mode. Type a message and Claude reads the page, runs
+      <code style="background:var(--code-bg);padding:0.1rem 0.4rem;border-radius:4px">browse</code>
+      commands, and responds — all without leaving the browser.
+    </p>
+
+    <h3>Setup</h3>
+    <pre><span class="comment"># 1. Install the add-on (requires claude CLI at claude.ai/download)</span>
+<span class="cmd">brew install juanheyns/gstack-browse/browse-agent</span>
+
+<span class="comment"># 2. Launch headed Chrome with sidebar from your project directory</span>
+<span class="cmd">cd ~/my-project
+browse connect</span>
+
+<span class="comment"># 3. Open the sidebar — click the extension icon or press Cmd+Shift+Y</span></pre>
+
+    <h3>How it works</h3>
+    <pre><span class="comment">You type in sidebar
+      ↓
+Chrome extension → browse server (/sidebar-command)
+      ↓
+sidebar-agent polls queue → spawns: claude -p "your message"
+      ↓
+Claude streams response → server → extension → sidebar</span></pre>
+
+    <p style="color:var(--muted);margin-top:1rem;font-size:0.9rem">
+      Claude runs in your project directory and has access to all <code style="background:var(--code-bg);padding:0.1rem 0.4rem;border-radius:4px">browse</code> commands —
+      it can navigate, snapshot, click, and read whatever page is open in Chrome.
+      Each browser tab gets its own independent Claude session.
+    </p>
   </section>
 
   <!-- Usage -->
