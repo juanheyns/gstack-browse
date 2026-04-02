@@ -47,6 +47,7 @@ jobs:
         run: |
           TARGET_FLAG=${BUN_TARGET:+--target=$BUN_TARGET}
           bun build --compile src/cli.ts --outfile dist/browse $TARGET_FLAG
+          bun build --compile src/server.ts --outfile dist/browse-server $TARGET_FLAG
           bun build --compile src/find-browse.ts --outfile dist/find-browse $TARGET_FLAG
           bash scripts/build-node-server.sh
 
@@ -71,6 +72,7 @@ jobs:
           TARGET_FLAG=${BUN_TARGET:+--target=$BUN_TARGET}
           bun build --compile src/sidebar-agent-main.ts --outfile dist/browse-agent $TARGET_FLAG
 
+
       - name: Build agent add-on (Windows)
         if: matrix.runner == 'windows-latest'
         run: bun run build:agent
@@ -79,7 +81,7 @@ jobs:
         if: matrix.runner != 'windows-latest'
         run: |
           cd dist
-          tar czf ../${{ matrix.output }}.tar.gz browse
+          tar czf ../${{ matrix.output }}.tar.gz browse browse-server
           tar czf ../browse-agent-${{ matrix.target }}.tar.gz browse-agent
 
       - name: Package (Windows)

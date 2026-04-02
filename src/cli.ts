@@ -46,26 +46,27 @@ export function resolveServerScript(
     return env.BROWSE_SERVER_SCRIPT;
   }
 
-  // Dev mode: cli.ts runs directly from browse/src
-  // On macOS/Linux, import.meta.dir starts with /
-  // On Windows, it starts with a drive letter (e.g., C:\...)
+  // Compiled binary: look for browse-server adjacent to the browse binary (production install)
+  if (execPath && execPath.includes('$bunfs') === false) {
+    const serverBin = path.resolve(path.dirname(execPath), 'browse-server');
+    if (fs.existsSync(serverBin)) return serverBin;
+    const serverBinExe = serverBin + '.exe';
+    if (fs.existsSync(serverBinExe)) return serverBinExe;
+  }
+
+  // Dev mode: server.ts is adjacent to cli.ts in src/
   if (!metaDir.includes('$bunfs')) {
     const direct = path.resolve(metaDir, 'server.ts');
     if (fs.existsSync(direct)) {
       return direct;
     }
-  }
-
-  // Compiled binary: derive the source tree from browse/dist/browse
-  if (execPath) {
-    const adjacent = path.resolve(path.dirname(execPath), '..', 'src', 'server.ts');
-    if (fs.existsSync(adjacent)) {
-      return adjacent;
-    }
+    // Also check dist/../src/server.ts when running compiled binary from the repo
+    const srcServer = path.resolve(metaDir, '..', 'src', 'server.ts');
+    if (fs.existsSync(srcServer)) return srcServer;
   }
 
   throw new Error(
-    'Cannot find server.ts. Set BROWSE_SERVER_SCRIPT env or run from the browse source tree.'
+    'Cannot find browse-server. Re-install browse or run `bun run build` in the source tree.'
   );
 }
 
@@ -258,8 +259,13 @@ async function startServer(extraEnv?: Record<string, string>): Promise<ServerSta
       `{BROWSE_STATE_FILE:${JSON.stringify(config.stateFile)}})}).unref()`;
     Bun.spawnSync(['node', '-e', launcherCode], { stdio: ['ignore', 'ignore', 'ignore'] });
   } else {
-    // macOS/Linux: Bun.spawn + unref works correctly
-    proc = Bun.spawn(['bun', 'run', SERVER_SCRIPT], {
+    // macOS/Linux: Bun.spawn + unref works correctly.
+    // If SERVER_SCRIPT is a compiled binary (browse-server), invoke directly.
+    // If it's a .ts file (dev mode), invoke via bun run.
+    const cmd = SERVER_SCRIPT.endsWith('.ts')
+      ? ['bun', 'run', SERVER_SCRIPT]
+      : [SERVER_SCRIPT];
+    proc = Bun.spawn(cmd, {
       stdio: ['ignore', 'pipe', 'pipe'],
       env: { ...process.env, BROWSE_STATE_FILE: config.stateFile, ...extraEnv },
     });
