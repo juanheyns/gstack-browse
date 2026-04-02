@@ -16,6 +16,23 @@ import { resolveConfig, ensureStateDir, readVersionHash } from './config';
 const config = resolveConfig();
 const IS_WINDOWS = process.platform === 'win32';
 
+function findBun(): string {
+  // Prefer bun from PATH
+  const { spawnSync: ss } = require('child_process') as typeof import('child_process');
+  const r = ss('which', ['bun'], { encoding: 'utf-8', stdio: 'pipe' });
+  if (r.status === 0 && r.stdout.trim()) return r.stdout.trim();
+  // Common install locations not always in PATH
+  const candidates = [
+    `${process.env.HOME}/.bun/bin/bun`,
+    '/opt/homebrew/bin/bun',
+    '/usr/local/bin/bun',
+  ];
+  for (const p of candidates) {
+    if (fs.existsSync(p)) return p;
+  }
+  throw new Error('bun not found. Install from https://bun.sh then re-run the command.');
+}
+
 function findAgentBin(): string | null {
   // 1. BROWSE_AGENT_PATH env var (explicit override)
   if (process.env.BROWSE_AGENT_PATH) return process.env.BROWSE_AGENT_PATH;
@@ -260,7 +277,7 @@ async function startServer(extraEnv?: Record<string, string>): Promise<ServerSta
   } else {
     // macOS/Linux: Bun.spawn + unref works correctly.
     // server.mjs (production) and server.ts (dev) both run via bun
-    const cmd = ['bun', 'run', SERVER_SCRIPT];
+    const cmd = [findBun(), 'run', SERVER_SCRIPT];
     proc = Bun.spawn(cmd, {
       stdio: ['ignore', 'pipe', 'pipe'],
       env: { ...process.env, BROWSE_STATE_FILE: config.stateFile, ...extraEnv },
@@ -544,10 +561,11 @@ Refs:           After 'snapshot', use @e1, @e2... as selectors:
       FORCE_COLOR: '1',   // encourage Playwright to show its progress bar
       CI: undefined,      // unset CI so Playwright uses interactive output mode
     };
-    let result = spawnSync('bun', ['x', 'playwright', 'install', 'chromium', '--with-deps'], {
-      stdio: 'inherit',
-      env,
-    });
+    let bunPath: string | null = null;
+    try { bunPath = findBun(); } catch {}
+    let result = bunPath
+      ? spawnSync(bunPath, ['x', 'playwright', 'install', 'chromium', '--with-deps'], { stdio: 'inherit', env })
+      : { error: new Error('bun not found'), status: null } as any;
     if (result.error) {
       result = spawnSync('npx', ['playwright', 'install', 'chromium', '--with-deps'], {
         stdio: 'inherit',

@@ -48,7 +48,7 @@ jobs:
           TARGET_FLAG=${BUN_TARGET:+--target=$BUN_TARGET}
           bun build --compile src/cli.ts --outfile dist/browse $TARGET_FLAG
           bun build --compile src/find-browse.ts --outfile dist/find-browse $TARGET_FLAG
-          bun build src/server.ts --outfile dist/server.mjs --target=bun --external playwright --external playwright-core --external diff --external bun:sqlite
+          bun build src/server.ts --outfile dist/server.mjs --target=bun --external playwright --external playwright-core
           bash scripts/build-node-server.sh
 
       - name: Build (Windows)
