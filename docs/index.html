@@ -227,8 +227,14 @@
 
     <div class="install-box">
       <span class="prompt">$</span>
-      <span class="cmd" id="install-cmd">brew install juanheyns/gstack-browse/browse</span>
+      <span class="cmd" id="install-cmd">brew install juanheyns/gstack/browse juanheyns/gstack/browse-agent</span>
       <button class="copy-btn" onclick="copyInstall(this)">copy</button>
+    </div>
+
+    <div class="install-box" style="margin-top: 0.75rem;">
+      <span class="prompt">$</span>
+      <span class="cmd" id="skill-cmd">npx skills add https://github.com/juanheyns/gstack-browse --skill gstack-browse</span>
+      <button class="copy-btn" onclick="copySkill(this)">copy</button>
     </div>
 
     <div class="badges">
@@ -244,7 +250,7 @@
     <h2>Installation</h2>
 
     <h3>Homebrew (recommended)</h3>
-    <pre><span class="cmd">brew tap juanheyns/gstack-browse
+    <pre><span class="cmd">brew tap juanheyns/gstack
 brew install browse
 browse setup-chromium</span>   <span class="comment"># installs Chromium once</span></pre>
 
@@ -255,7 +261,7 @@ mv browse /usr/local/bin/
 browse setup-chromium</span></pre>
 
     <h3>Optional: Claude sidebar agent</h3>
-    <pre><span class="cmd">brew install juanheyns/gstack-browse/browse-agent</span>
+    <pre><span class="cmd">brew install juanheyns/gstack/browse-agent</span>
 <span class="comment"># Enables a Claude-powered sidebar in headed mode. Requires the claude CLI.</span></pre>
 
     <h3>Claude Code skill (skills.sh)</h3>
@@ -275,7 +281,7 @@ browse setup-chromium</span></pre>
 
     <h3>Setup</h3>
     <pre><span class="comment"># 1. Install the add-on (requires claude CLI at claude.ai/download)</span>
-<span class="cmd">brew install juanheyns/gstack-browse/browse-agent</span>
+<span class="cmd">brew install juanheyns/gstack/browse-agent</span>
 
 <span class="comment"># 2. Launch headed Chrome with sidebar from your project directory</span>
 <span class="cmd">cd ~/my-project
@@ -436,14 +442,16 @@ Claude streams response → server → extension → sidebar</span></pre>
 </footer>
 
 <script>
-  function copyInstall(btn) {
-    const text = document.getElementById('install-cmd').textContent;
+  function copyText(id, btn) {
+    const text = document.getElementById(id).textContent;
     navigator.clipboard.writeText(text).then(() => {
       btn.textContent = 'copied!';
       btn.classList.add('copied');
       setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 2000);
     });
   }
+  function copyInstall(btn) { copyText('install-cmd', btn); }
+  function copySkill(btn) { copyText('skill-cmd', btn); }
 </script>
 
 </body>

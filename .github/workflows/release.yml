@@ -147,7 +147,7 @@ jobs:
 
       - name: Clone tap repo
         run: |
-          git clone https://x-access-token:${{ secrets.HOMEBREW_TAP_TOKEN }}@github.com/juanheyns/homebrew-gstack-browse.git tap
+          git clone https://x-access-token:${{ secrets.HOMEBREW_TAP_TOKEN }}@github.com/juanheyns/homebrew-gstack.git tap
 
       - name: Update browse.rb
         run: |
