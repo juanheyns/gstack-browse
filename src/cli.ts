@@ -536,10 +536,22 @@ Refs:           After 'snapshot', use @e1, @e2... as selectors:
   // ─── setup-chromium subcommand ──────────────────────────────────
   if (command === 'setup-chromium') {
     const { spawnSync } = require('child_process') as typeof import('child_process');
-    const result = spawnSync('bunx', ['playwright', 'install', 'chromium'], {
+    console.log('Installing Chromium via Playwright...');
+    // Try bun first, fall back to npx
+    let result = spawnSync('bun', ['x', 'playwright', 'install', 'chromium', '--with-deps'], {
       stdio: 'inherit',
       env: process.env,
     });
+    if (result.error) {
+      result = spawnSync('npx', ['playwright', 'install', 'chromium', '--with-deps'], {
+        stdio: 'inherit',
+        env: process.env,
+      });
+    }
+    if (result.error) {
+      console.error('Could not find bun or npx. Install bun from https://bun.sh and try again.');
+      process.exit(1);
+    }
     process.exit(result.status ?? 1);
   }
 
