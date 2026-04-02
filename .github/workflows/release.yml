@@ -17,9 +17,11 @@ jobs:
         include:
           - runner: macos-14
             target: darwin-arm64
+            bun_target: bun-darwin-arm64
             output: browse-darwin-arm64
-          - runner: macos-13
+          - runner: macos-14
             target: darwin-x86_64
+            bun_target: bun-darwin-x64
             output: browse-darwin-x86_64
           - runner: ubuntu-latest
             target: linux-x86_64
@@ -40,7 +42,13 @@ jobs:
 
       - name: Build (non-Windows)
         if: matrix.runner != 'windows-latest'
-        run: bun run build
+        env:
+          BUN_TARGET: ${{ matrix.bun_target }}
+        run: |
+          TARGET_FLAG=${BUN_TARGET:+--target=$BUN_TARGET}
+          bun build --compile src/cli.ts --outfile dist/browse $TARGET_FLAG
+          bun build --compile src/find-browse.ts --outfile dist/find-browse $TARGET_FLAG
+          bash scripts/build-node-server.sh
 
       - name: Build (Windows)
         if: matrix.runner == 'windows-latest'
@@ -55,7 +63,16 @@ jobs:
         shell: pwsh
         run: git rev-parse HEAD | Out-File -FilePath dist/.version -Encoding ascii -NoNewline
 
-      - name: Build agent add-on
+      - name: Build agent add-on (non-Windows)
+        if: matrix.runner != 'windows-latest'
+        env:
+          BUN_TARGET: ${{ matrix.bun_target }}
+        run: |
+          TARGET_FLAG=${BUN_TARGET:+--target=$BUN_TARGET}
+          bun build --compile src/sidebar-agent-main.ts --outfile dist/browse-agent $TARGET_FLAG
+
+      - name: Build agent add-on (Windows)
+        if: matrix.runner == 'windows-latest'
         run: bun run build:agent
 
       - name: Package (non-Windows)
