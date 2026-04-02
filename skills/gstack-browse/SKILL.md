@@ -1,5 +1,5 @@
 ---
-name: browse
+name: gstack-browse
 description: Persistent headless browser for AI agents — navigate, read, interact, snapshot
 version: 1.0.0
 allowed-tools:
