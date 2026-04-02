@@ -154,16 +154,14 @@ jobs:
           SHA_LINUX_X86=$(cat browse-linux-x86_64.sha256)
           SHA_LINUX_ARM=$(cat browse-linux-arm64.sha256)
           sed -i "s|version \".*\"|version \"${VERSION}\"|g" tap/Formula/browse.rb
-          # Update macOS ARM URL+SHA
-          sed -i "/darwin.*arm/,/sha256/{s|url \".*\"|url \"https://github.com/juanheyns/gstack-browse/releases/download/v${VERSION}/browse-darwin-arm64.tar.gz\"|}" tap/Formula/browse.rb
-          sed -i "/darwin.*arm/,/sha256/{s|sha256 \".*\"|sha256 \"${SHA_DARWIN_ARM}\"|}" tap/Formula/browse.rb
-          # Repeat pattern for x86, linux arm, linux x86 (same sed approach)
-          sed -i "/darwin.*intel/,/sha256/{s|url \".*\"|url \"https://github.com/juanheyns/gstack-browse/releases/download/v${VERSION}/browse-darwin-x86_64.tar.gz\"|}" tap/Formula/browse.rb
-          sed -i "/darwin.*intel/,/sha256/{s|sha256 \".*\"|sha256 \"${SHA_DARWIN_X86}\"|}" tap/Formula/browse.rb
-          sed -i "/linux.*intel/,/sha256/{s|url \".*\"|url \"https://github.com/juanheyns/gstack-browse/releases/download/v${VERSION}/browse-linux-x86_64.tar.gz\"|}" tap/Formula/browse.rb
-          sed -i "/linux.*intel/,/sha256/{s|sha256 \".*\"|sha256 \"${SHA_LINUX_X86}\"|}" tap/Formula/browse.rb
-          sed -i "/linux.*arm/,/sha256/{s|url \".*\"|url \"https://github.com/juanheyns/gstack-browse/releases/download/v${VERSION}/browse-linux-arm64.tar.gz\"|}" tap/Formula/browse.rb
-          sed -i "/linux.*arm/,/sha256/{s|sha256 \".*\"|sha256 \"${SHA_LINUX_ARM}\"|}" tap/Formula/browse.rb
+          sed -i "/darwin-arm64/,/sha256/{s|url \".*\"|url \"https://github.com/juanheyns/gstack-browse/releases/download/v${VERSION}/browse-darwin-arm64.tar.gz\"|}" tap/Formula/browse.rb
+          sed -i "/darwin-arm64/,/sha256/{s|sha256 \".*\"|sha256 \"${SHA_DARWIN_ARM}\"|}" tap/Formula/browse.rb
+          sed -i "/darwin-x86_64/,/sha256/{s|url \".*\"|url \"https://github.com/juanheyns/gstack-browse/releases/download/v${VERSION}/browse-darwin-x86_64.tar.gz\"|}" tap/Formula/browse.rb
+          sed -i "/darwin-x86_64/,/sha256/{s|sha256 \".*\"|sha256 \"${SHA_DARWIN_X86}\"|}" tap/Formula/browse.rb
+          sed -i "/linux-x86_64/,/sha256/{s|url \".*\"|url \"https://github.com/juanheyns/gstack-browse/releases/download/v${VERSION}/browse-linux-x86_64.tar.gz\"|}" tap/Formula/browse.rb
+          sed -i "/linux-x86_64/,/sha256/{s|sha256 \".*\"|sha256 \"${SHA_LINUX_X86}\"|}" tap/Formula/browse.rb
+          sed -i "/linux-arm64/,/sha256/{s|url \".*\"|url \"https://github.com/juanheyns/gstack-browse/releases/download/v${VERSION}/browse-linux-arm64.tar.gz\"|}" tap/Formula/browse.rb
+          sed -i "/linux-arm64/,/sha256/{s|sha256 \".*\"|sha256 \"${SHA_LINUX_ARM}\"|}" tap/Formula/browse.rb
 
       - name: Update browse-agent.rb
         run: |
@@ -172,16 +170,15 @@ jobs:
           SHA_AGENT_DARWIN_X86=$(cat browse-agent-darwin-x86_64.sha256)
           SHA_AGENT_LINUX_X86=$(cat browse-agent-linux-x86_64.sha256)
           SHA_AGENT_LINUX_ARM=$(cat browse-agent-linux-arm64.sha256)
-          # Apply same sed pattern to tap/Formula/browse-agent.rb
           sed -i "s|version \".*\"|version \"${VERSION}\"|g" tap/Formula/browse-agent.rb
-          sed -i "/darwin.*arm/,/sha256/{s|url \".*\"|url \"https://github.com/juanheyns/gstack-browse/releases/download/v${VERSION}/browse-agent-darwin-arm64.tar.gz\"|}" tap/Formula/browse-agent.rb
-          sed -i "/darwin.*arm/,/sha256/{s|sha256 \".*\"|sha256 \"${SHA_AGENT_DARWIN_ARM}\"|}" tap/Formula/browse-agent.rb
-          sed -i "/darwin.*intel/,/sha256/{s|url \".*\"|url \"https://github.com/juanheyns/gstack-browse/releases/download/v${VERSION}/browse-agent-darwin-x86_64.tar.gz\"|}" tap/Formula/browse-agent.rb
-          sed -i "/darwin.*intel/,/sha256/{s|sha256 \".*\"|sha256 \"${SHA_AGENT_DARWIN_X86}\"|}" tap/Formula/browse-agent.rb
-          sed -i "/linux.*intel/,/sha256/{s|url \".*\"|url \"https://github.com/juanheyns/gstack-browse/releases/download/v${VERSION}/browse-agent-linux-x86_64.tar.gz\"|}" tap/Formula/browse-agent.rb
-          sed -i "/linux.*intel/,/sha256/{s|sha256 \".*\"|sha256 \"${SHA_AGENT_LINUX_X86}\"|}" tap/Formula/browse-agent.rb
-          sed -i "/linux.*arm/,/sha256/{s|url \".*\"|url \"https://github.com/juanheyns/gstack-browse/releases/download/v${VERSION}/browse-agent-linux-arm64.tar.gz\"|}" tap/Formula/browse-agent.rb
-          sed -i "/linux.*arm/,/sha256/{s|sha256 \".*\"|sha256 \"${SHA_AGENT_LINUX_ARM}\"|}" tap/Formula/browse-agent.rb
+          sed -i "/darwin-arm64/,/sha256/{s|url \".*\"|url \"https://github.com/juanheyns/gstack-browse/releases/download/v${VERSION}/browse-agent-darwin-arm64.tar.gz\"|}" tap/Formula/browse-agent.rb
+          sed -i "/darwin-arm64/,/sha256/{s|sha256 \".*\"|sha256 \"${SHA_AGENT_DARWIN_ARM}\"|}" tap/Formula/browse-agent.rb
+          sed -i "/darwin-x86_64/,/sha256/{s|url \".*\"|url \"https://github.com/juanheyns/gstack-browse/releases/download/v${VERSION}/browse-agent-darwin-x86_64.tar.gz\"|}" tap/Formula/browse-agent.rb
+          sed -i "/darwin-x86_64/,/sha256/{s|sha256 \".*\"|sha256 \"${SHA_AGENT_DARWIN_X86}\"|}" tap/Formula/browse-agent.rb
+          sed -i "/linux-x86_64/,/sha256/{s|url \".*\"|url \"https://github.com/juanheyns/gstack-browse/releases/download/v${VERSION}/browse-agent-linux-x86_64.tar.gz\"|}" tap/Formula/browse-agent.rb
+          sed -i "/linux-x86_64/,/sha256/{s|sha256 \".*\"|sha256 \"${SHA_AGENT_LINUX_X86}\"|}" tap/Formula/browse-agent.rb
+          sed -i "/linux-arm64/,/sha256/{s|url \".*\"|url \"https://github.com/juanheyns/gstack-browse/releases/download/v${VERSION}/browse-agent-linux-arm64.tar.gz\"|}" tap/Formula/browse-agent.rb
+          sed -i "/linux-arm64/,/sha256/{s|sha256 \".*\"|sha256 \"${SHA_AGENT_LINUX_ARM}\"|}" tap/Formula/browse-agent.rb
 
       - name: Commit and push formula update
         run: |
