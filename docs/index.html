@@ -211,8 +211,8 @@
   <span class="logo">browse</span>
   <nav>
     <a href="#install">Install</a>
+    <a href="#usage">Quick start</a>
     <a href="#sidebar">Sidebar</a>
-    <a href="#usage">Usage</a>
     <a href="#commands">Commands</a>
     <a href="https://github.com/juanheyns/gstack-browse">GitHub</a>
   </nav>
@@ -233,7 +233,7 @@
 
     <div class="install-box" style="margin-top: 0.75rem;">
       <span class="prompt">$</span>
-      <span class="cmd" id="skill-cmd">npx skills add https://github.com/juanheyns/gstack-browse --skill gstack-browse</span>
+      <span class="cmd" id="skill-cmd">npx skills add juanheyns/gstack-browse --skill gstack-browse</span>
       <button class="copy-btn" onclick="copySkill(this)">copy</button>
     </div>
 
@@ -265,8 +265,37 @@ browse setup-chromium</span></pre>
 <span class="comment"># Enables a Claude-powered sidebar in headed mode. Requires the claude CLI.</span></pre>
 
     <h3>Claude Code skill (skills.sh)</h3>
-    <pre><span class="cmd">npx skills add https://github.com/juanheyns/gstack-browse --skill gstack-browse</span>
+    <pre><span class="cmd">npx skills add juanheyns/gstack-browse --skill gstack-browse</span>
 <span class="comment"># Installs the browse skill into your AI agent for use in any project.</span></pre>
+  </section>
+
+  <!-- Quick start -->
+  <section id="usage">
+    <h2>Quick start</h2>
+
+    <h3>Navigate and read</h3>
+    <pre><span class="cmd">browse goto https://example.com</span>
+<span class="cmd">browse text</span>                   <span class="comment"># extract all visible text</span>
+<span class="cmd">browse snapshot</span>               <span class="comment"># structured snapshot with @ref labels</span>
+<span class="cmd">browse screenshot /tmp/page.png</span></pre>
+
+    <h3>Fill a form</h3>
+    <pre><span class="cmd">browse goto https://example.com/login</span>
+<span class="cmd">browse fill <span class="str">"#email"</span> <span class="str">"user@example.com"</span></span>
+<span class="cmd">browse fill <span class="str">"#password"</span> <span class="str">"secret"</span></span>
+<span class="cmd">browse click <span class="str">"[type=submit]"</span></span>
+<span class="cmd">browse wait --networkidle</span>
+<span class="cmd">browse url</span>                    <span class="comment"># confirm redirect</span></pre>
+
+    <h3>Use snapshot refs</h3>
+    <pre><span class="cmd">browse snapshot</span>               <span class="comment"># labels interactive elements @e1, @e2 …</span>
+<span class="cmd">browse click @e3</span>
+<span class="cmd">browse fill @e4 <span class="str">"search term"</span></span>
+<span class="cmd">browse snapshot -D</span>            <span class="comment"># diff against previous snapshot</span></pre>
+
+    <h3>Responsive screenshots</h3>
+    <pre><span class="cmd">browse goto https://example.com</span>
+<span class="cmd">browse responsive /tmp/shots</span>  <span class="comment"># saves mobile / tablet / desktop PNGs</span></pre>
   </section>
 
   <!-- Sidebar agent -->
@@ -303,35 +332,6 @@ Claude streams response → server → extension → sidebar</span></pre>
       it can navigate, snapshot, click, and read whatever page is open in Chrome.
       Each browser tab gets its own independent Claude session.
     </p>
-  </section>
-
-  <!-- Usage -->
-  <section id="usage">
-    <h2>Quick start</h2>
-
-    <h3>Navigate and read</h3>
-    <pre><span class="cmd">browse goto https://example.com</span>
-<span class="cmd">browse text</span>                   <span class="comment"># extract all visible text</span>
-<span class="cmd">browse snapshot</span>               <span class="comment"># structured snapshot with @ref labels</span>
-<span class="cmd">browse screenshot /tmp/page.png</span></pre>
-
-    <h3>Fill a form</h3>
-    <pre><span class="cmd">browse goto https://example.com/login</span>
-<span class="cmd">browse fill <span class="str">"#email"</span> <span class="str">"user@example.com"</span></span>
-<span class="cmd">browse fill <span class="str">"#password"</span> <span class="str">"secret"</span></span>
-<span class="cmd">browse click <span class="str">"[type=submit]"</span></span>
-<span class="cmd">browse wait --networkidle</span>
-<span class="cmd">browse url</span>                    <span class="comment"># confirm redirect</span></pre>
-
-    <h3>Use snapshot refs</h3>
-    <pre><span class="cmd">browse snapshot</span>               <span class="comment"># labels interactive elements @e1, @e2 …</span>
-<span class="cmd">browse click @e3</span>
-<span class="cmd">browse fill @e4 <span class="str">"search term"</span></span>
-<span class="cmd">browse snapshot -D</span>            <span class="comment"># diff against previous snapshot</span></pre>
-
-    <h3>Responsive screenshots</h3>
-    <pre><span class="cmd">browse goto https://example.com</span>
-<span class="cmd">browse responsive /tmp/shots</span>  <span class="comment"># saves mobile / tablet / desktop PNGs</span></pre>
   </section>
 
   <!-- Commands -->

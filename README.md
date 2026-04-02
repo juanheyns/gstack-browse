@@ -12,7 +12,7 @@ brew install browse
 
 **Claude Code skill** ([skills.sh](https://skills.sh))
 ```bash
-npx skills add https://github.com/juanheyns/gstack-browse --skill gstack-browse
+npx skills add juanheyns/gstack-browse --skill gstack-browse
 ```
 
 ## Quick start
