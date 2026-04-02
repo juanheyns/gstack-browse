@@ -699,6 +699,10 @@ Refs:           After 'snapshot', use @e1, @e2... as selectors:
         console.log('[browse] Sidebar agent not installed. Install browse-agent for Claude integration.');
         console.log('[browse]   brew install juanheyns/gstack-browse/browse-agent');
       }
+
+      console.log('');
+      console.log('Sidebar: click the gstack browse icon in the Chrome toolbar to open the panel.');
+      console.log('Shortcut: Cmd+Shift+Y (or set a custom one at chrome://extensions/shortcuts)');
     } catch (err: any) {
       console.error(`[browse] Connect failed: ${err.message}`);
       process.exit(1);
