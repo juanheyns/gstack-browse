@@ -12,6 +12,7 @@
     "build:node-server": "bash scripts/build-node-server.sh",
     "build:agent": "bun build --compile src/sidebar-agent-main.ts --outfile dist/browse-agent",
     "test": "bun test test/",
+    "smoke": "bun test test/smoke.test.ts --timeout 60000",
     "setup": "bash setup",
     "typecheck": "bun run tsc --noEmit"
   },
