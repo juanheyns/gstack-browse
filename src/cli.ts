@@ -46,27 +46,26 @@ export function resolveServerScript(
     return env.BROWSE_SERVER_SCRIPT;
   }
 
-  // Compiled binary: look for browse-server adjacent to the browse binary (production install)
-  if (execPath && execPath.includes('$bunfs') === false) {
-    const serverBin = path.resolve(path.dirname(execPath), 'browse-server');
-    if (fs.existsSync(serverBin)) return serverBin;
-    const serverBinExe = serverBin + '.exe';
-    if (fs.existsSync(serverBinExe)) return serverBinExe;
+  // Production install: server.mjs bundle adjacent to the browse binary
+  if (execPath) {
+    const serverMjs = path.resolve(path.dirname(execPath), 'server.mjs');
+    if (fs.existsSync(serverMjs)) return serverMjs;
   }
 
   // Dev mode: server.ts is adjacent to cli.ts in src/
   if (!metaDir.includes('$bunfs')) {
     const direct = path.resolve(metaDir, 'server.ts');
-    if (fs.existsSync(direct)) {
-      return direct;
-    }
-    // Also check dist/../src/server.ts when running compiled binary from the repo
-    const srcServer = path.resolve(metaDir, '..', 'src', 'server.ts');
+    if (fs.existsSync(direct)) return direct;
+  }
+
+  // Dev mode compiled binary (dist/browse): src/server.ts is one level up
+  if (execPath) {
+    const srcServer = path.resolve(path.dirname(execPath), '..', 'src', 'server.ts');
     if (fs.existsSync(srcServer)) return srcServer;
   }
 
   throw new Error(
-    'Cannot find browse-server. Re-install browse or run `bun run build` in the source tree.'
+    'Cannot find server.mjs. Re-install browse or run `bun run build` in the source tree.'
   );
 }
 
@@ -260,11 +259,8 @@ async function startServer(extraEnv?: Record<string, string>): Promise<ServerSta
     Bun.spawnSync(['node', '-e', launcherCode], { stdio: ['ignore', 'ignore', 'ignore'] });
   } else {
     // macOS/Linux: Bun.spawn + unref works correctly.
-    // If SERVER_SCRIPT is a compiled binary (browse-server), invoke directly.
-    // If it's a .ts file (dev mode), invoke via bun run.
-    const cmd = SERVER_SCRIPT.endsWith('.ts')
-      ? ['bun', 'run', SERVER_SCRIPT]
-      : [SERVER_SCRIPT];
+    // server.mjs (production) and server.ts (dev) both run via bun
+    const cmd = ['bun', 'run', SERVER_SCRIPT];
     proc = Bun.spawn(cmd, {
       stdio: ['ignore', 'pipe', 'pipe'],
       env: { ...process.env, BROWSE_STATE_FILE: config.stateFile, ...extraEnv },

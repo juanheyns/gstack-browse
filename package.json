@@ -7,7 +7,7 @@
   "scripts": {
     "build": "bun run build:browse && bun run build:server && bun run build:find-browse && bun run build:node-server",
     "build:browse": "bun build --compile src/cli.ts --outfile dist/browse",
-    "build:server": "bun build --compile src/server.ts --outfile dist/browse-server",
+    "build:server": "bun build src/server.ts --outfile dist/server.mjs --target=bun --external playwright --external playwright-core --external diff --external bun:sqlite",
     "build:find-browse": "bun build --compile src/find-browse.ts --outfile dist/find-browse",
     "build:node-server": "bash scripts/build-node-server.sh",
     "build:agent": "bun build --compile src/sidebar-agent-main.ts --outfile dist/browse-agent",
