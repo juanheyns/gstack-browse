@@ -60,7 +60,10 @@ async function resolvesToBlockedIp(hostname: string): Promise<boolean> {
   }
 }
 
-export async function validateNavigationUrl(url: string): Promise<void> {
+export async function validateNavigationUrl(
+  url: string,
+  trustedHosts?: Set<string>,
+): Promise<void> {
   let parsed: URL;
   try {
     parsed = new URL(url);
@@ -80,6 +83,21 @@ export async function validateNavigationUrl(url: string): Promise<void> {
     throw new Error(
       `Blocked: ${parsed.hostname} is a cloud metadata endpoint. Access is denied for security.`
     );
+  }
+
+  // When BROWSE_TRUSTED_HOSTS is set, ignoreHTTPSErrors is context-wide (Playwright
+  // limitation). Restrict HTTPS navigation to only the explicitly trusted origins
+  // so the broad bypass cannot leak to arbitrary hosts.
+  // Entries can be hostname-only ("localhost" → any port) or host:port ("localhost:8443").
+  if (trustedHosts && trustedHosts.size > 0 && parsed.protocol === 'https:') {
+    const hostWithPort = parsed.port ? `${hostname}:${parsed.port}` : hostname;
+    const trusted = trustedHosts.has(hostname) || trustedHosts.has(hostWithPort);
+    if (!trusted) {
+      throw new Error(
+        `Blocked: HTTPS to "${parsed.host}" is not in BROWSE_TRUSTED_HOSTS. ` +
+        `Trusted: ${[...trustedHosts].join(', ')}. Use http: or add the host to the allowlist.`
+      );
+    }
   }
 
   // DNS rebinding protection: resolve hostname and check if it points to metadata IPs.

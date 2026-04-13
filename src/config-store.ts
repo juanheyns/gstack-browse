@@ -8,6 +8,8 @@
  *   headed          boolean  launch in headed mode by default
  *   idle_timeout    number   seconds before server auto-shuts down (default 1800)
  *   chromium_profile string  path override for Chromium user-data directory
+ *   trusted_hosts   string   comma-separated hostnames/IPs to allow self-signed certs
+ *                            (e.g. "localhost,192.168.1.5:8443")
  */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';

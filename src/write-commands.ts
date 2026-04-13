@@ -148,7 +148,7 @@ export async function handleWriteCommand(
       if (inFrame) throw new Error('Cannot use goto inside a frame. Run \'frame main\' first.');
       const url = args[0];
       if (!url) throw new Error('Usage: browse goto <url>');
-      await validateNavigationUrl(url);
+      await validateNavigationUrl(url, bm.trustedHosts);
       const response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 15000 });
       const status = response?.status() || 'unknown';
       return `Navigated to ${url} (${status})`;

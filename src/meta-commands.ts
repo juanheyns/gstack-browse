@@ -272,11 +272,11 @@ export async function handleMetaCommand(
       if (!url1 || !url2) throw new Error('Usage: browse diff <url1> <url2>');
 
       const page = bm.getPage();
-      await validateNavigationUrl(url1);
+      await validateNavigationUrl(url1, bm.trustedHosts);
       await page.goto(url1, { waitUntil: 'domcontentloaded', timeout: 15000 });
       const text1 = await getCleanText(page);
 
-      await validateNavigationUrl(url2);
+      await validateNavigationUrl(url2, bm.trustedHosts);
       await page.goto(url2, { waitUntil: 'domcontentloaded', timeout: 15000 });
       const text2 = await getCleanText(page);
 

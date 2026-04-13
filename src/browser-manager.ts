@@ -18,6 +18,7 @@
 import { chromium, type Browser, type BrowserContext, type BrowserContextOptions, type Page, type Locator, type Cookie } from 'playwright';
 import { addConsoleEntry, addNetworkEntry, addDialogEntry, networkBuffer, type DialogEntry } from './buffers';
 import { validateNavigationUrl } from './url-validation';
+import { getConfigValue } from './config-store';
 
 export interface RefEntry {
   locator: Locator;
@@ -70,6 +71,27 @@ export class BrowserManager {
   // ─── Headed State ────────────────────────────────────────
   private connectionMode: 'launched' | 'headed' = 'launched';
   private intentionalDisconnect = false;
+
+  // ─── Trusted Hosts (self-signed cert bypass) ─────────────
+  // Env var BROWSE_TRUSTED_HOSTS takes precedence; falls back to config
+  // "trusted_hosts" (comma-separated string or array).
+  // ignoreHTTPSErrors is context-wide in Playwright so we gate navigation:
+  // only trusted hosts may be reached over HTTPS when the bypass is active.
+  readonly trustedHosts: Set<string> = (() => {
+    const raw = process.env.BROWSE_TRUSTED_HOSTS
+      ?? (() => {
+        const v = getConfigValue('trusted_hosts');
+        if (Array.isArray(v)) return v.join(',');
+        return typeof v === 'string' ? v : '';
+      })();
+    return new Set(
+      String(raw || '')
+        .split(',')
+        .map(h => h.trim().toLowerCase())
+        .filter(Boolean),
+    );
+  })();
+
 
   getConnectionMode(): 'launched' | 'headed' { return this.connectionMode; }
 
@@ -189,6 +211,9 @@ export class BrowserManager {
     if (this.customUserAgent) {
       contextOptions.userAgent = this.customUserAgent;
     }
+    if (this.trustedHosts.size > 0) {
+      contextOptions.ignoreHTTPSErrors = true;
+    }
     this.context = await this.browser.newContext(contextOptions);
 
     if (Object.keys(this.extraHeaders).length > 0) {
@@ -280,6 +305,7 @@ export class BrowserManager {
         '--disable-extensions',
         '--disable-component-extensions-with-background-pages',
       ],
+      ...(this.trustedHosts.size > 0 ? { ignoreHTTPSErrors: true } : {}),
     });
     this.browser = this.context.browser();
     this.connectionMode = 'headed';
@@ -409,7 +435,7 @@ export class BrowserManager {
 
     // Validate URL before allocating page to avoid zombie tabs on rejection
     if (url) {
-      await validateNavigationUrl(url);
+      await validateNavigationUrl(url, this.trustedHosts);
     }
 
     const page = await this.context.newPage();
@@ -882,6 +908,7 @@ export class BrowserManager {
           '--disable-component-extensions-with-background-pages',
         ],
         timeout: 15000,
+        ...(this.trustedHosts.size > 0 ? { ignoreHTTPSErrors: true } : {}),
       });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);

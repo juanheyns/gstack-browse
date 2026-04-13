@@ -943,6 +943,9 @@ async function start() {
     } else {
       await browserManager.launch();
     }
+    if (browserManager.trustedHosts.size > 0) {
+      console.log(`[browse] HTTPS cert bypass active for: ${[...browserManager.trustedHosts].join(', ')}`);
+    }
   }
 
   const startTime = Date.now();
