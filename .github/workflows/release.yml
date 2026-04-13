@@ -59,12 +59,15 @@ jobs:
 
       - name: Write version file (non-Windows)
         if: matrix.runner != 'windows-latest'
-        run: git rev-parse HEAD > dist/.version
+        run: echo "${GITHUB_REF_NAME#v} ($(git rev-parse --short HEAD))" > dist/.version
 
       - name: Write version file (Windows)
         if: matrix.runner == 'windows-latest'
         shell: pwsh
-        run: git rev-parse HEAD | Out-File -FilePath dist/.version -Encoding ascii -NoNewline
+        run: |
+          $tag = $env:GITHUB_REF_NAME -replace '^v',''
+          $sha = (git rev-parse --short HEAD)
+          "$tag ($sha)" | Out-File -FilePath dist/.version -Encoding ascii -NoNewline
 
       - name: Build agent add-on (non-Windows)
         if: matrix.runner != 'windows-latest'
@@ -93,7 +96,7 @@ jobs:
         run: |
           cp -r extension dist/extension
           cd dist
-          tar czf ../${{ matrix.output }}.tar.gz browse server.mjs extension
+          tar czf ../${{ matrix.output }}.tar.gz browse server.mjs .version extension
           tar czf ../browse-agent-${{ matrix.target }}.tar.gz browse-agent sidebar-agent.mjs
 
       - name: Package (Windows)
