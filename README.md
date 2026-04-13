@@ -106,9 +106,24 @@ Requires [bun](https://bun.sh) >= 1.0.0.
 browse config set idle_timeout 3600     # Auto-shutdown after 1 hour (default: 1800)
 browse config set headed true           # Always launch in headed mode
 browse config set chromium_profile /path/to/profile
+browse config set trusted_hosts "localhost,192.168.1.5:8443"
 ```
 
 Config is stored at `~/.config/browse/config.json`.
+
+### Self-signed certificates
+
+To test against local dev servers (e.g. Docker containers) with self-signed certs, add trusted hosts:
+
+```bash
+# Persistent — set once
+browse config set trusted_hosts "localhost,192.168.1.5:8443"
+
+# Per-session via env var (overrides config)
+BROWSE_TRUSTED_HOSTS=localhost:8443 browse goto https://localhost:8443
+```
+
+Entries can be hostname-only (`localhost` — trusts all ports) or `host:port` (`localhost:8443` — that port only). When active, HTTPS navigation is restricted to only the listed hosts so the cert bypass cannot leak to untrusted origins.
 
 ## Upgrade
 

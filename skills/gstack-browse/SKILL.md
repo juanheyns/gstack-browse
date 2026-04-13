@@ -222,6 +222,20 @@ With `snapshot -C` (cursor-interactive mode), non-ARIA clickable elements get `@
 | `-o path` | `--output path` | Save snapshot to file |
 | `-C` | `--cursor-interactive` | Find non-ARIA clickable elements |
 
+## Self-signed certificates
+
+To test against local dev servers with self-signed certs, specify which hosts to trust:
+
+```bash
+# Env var (per-session)
+BROWSE_TRUSTED_HOSTS=localhost browse goto https://localhost:8443
+
+# Persistent config
+browse config set trusted_hosts "localhost,192.168.1.5:8443"
+```
+
+Entries can be hostname-only (`localhost` — any port) or `host:port` (`localhost:8443` — that port only). HTTPS navigation to hosts not in the list is blocked when the bypass is active, so the cert exception cannot leak to untrusted origins.
+
 ## Session management
 
 browse runs a persistent background server. It starts automatically on first command and shuts down after 30 minutes of inactivity (configurable via `browse config set idle_timeout 3600`).
