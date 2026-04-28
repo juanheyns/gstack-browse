@@ -6,8 +6,7 @@ Persistent headless browser CLI for AI agents. Navigate, interact, snapshot, and
 
 **Homebrew**
 ```bash
-brew tap juanheyns/gstack
-brew install browse
+brew install juanheyns/tap/browse
 ```
 
 **Claude Code skill** ([skills.sh](https://skills.sh))
@@ -34,7 +33,7 @@ See [SKILL.md](./SKILL.md) for the full command reference (60+ commands) with ex
 `browse-agent` adds a Claude-powered sidebar to headed mode. It requires the `claude` CLI (Claude Code) in PATH.
 
 ```bash
-brew install juanheyns/gstack/browse-agent
+brew install juanheyns/tap/browse-agent
 browse connect
 ```
 

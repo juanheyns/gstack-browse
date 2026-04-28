@@ -189,7 +189,7 @@ browse connect   # launches Chrome with extension pre-loaded
 The Chrome side panel includes a chat interface. Type a message and a child Claude instance executes it in the browser. Requires the optional `browse-agent` add-on and the `claude` CLI in PATH.
 
 ```bash
-brew install juanheyns/gstack-browse/browse-agent
+brew install juanheyns/tap/browse-agent
 browse connect   # launch headed Chrome + start sidebar agent
 ```
 

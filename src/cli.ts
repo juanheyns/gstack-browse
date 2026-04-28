@@ -697,7 +697,7 @@ Refs:           After 'snapshot', use @e1, @e2... as selectors:
         }
       } else {
         console.log('[browse] Sidebar agent not installed. Install browse-agent for Claude integration.');
-        console.log('[browse]   brew install juanheyns/gstack-browse/browse-agent');
+        console.log('[browse]   brew install juanheyns/tap/browse-agent');
       }
 
       const hasAgent = !!agentPath;
@@ -719,7 +719,7 @@ Refs:           After 'snapshot', use @e1, @e2... as selectors:
         console.log('       browse snapshot');
       } else {
         console.log('  2. Install browse-agent for Claude chat');
-        console.log('       brew install juanheyns/gstack-browse/browse-agent');
+        console.log('       brew install juanheyns/tap/browse-agent');
         console.log('       Then re-run: browse connect');
         console.log('');
         console.log('  3. Navigate from your terminal');

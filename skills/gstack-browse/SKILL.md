@@ -254,6 +254,6 @@ Logs: `.browse/browse-{console,network,dialog}.log`
 The `browse-agent` add-on enables a Claude-powered sidebar in headed mode. It requires the `claude` CLI in PATH.
 
 ```bash
-brew install juanheyns/gstack-browse/browse-agent
+brew install juanheyns/tap/browse-agent
 browse connect  # Launch headed Chrome + start sidebar agent
 ```

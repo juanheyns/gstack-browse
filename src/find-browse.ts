@@ -43,7 +43,7 @@ export function locateBinary(): string | null {
 function main() {
   const bin = locateBinary();
   if (!bin) {
-    process.stderr.write('ERROR: browse binary not found. Install with: brew install juanheyns/gstack-browse/browse\n');
+    process.stderr.write('ERROR: browse binary not found. Install with: brew install juanheyns/tap/browse\n');
     process.exit(1);
   }
 
